@@ -85,7 +85,7 @@ func DownloadContent(client *github.Client, ctx context.Context, owner, repo, pa
 		}
 		}
 	if fileContent != nil{
-		file, err := os.Create(*fileContent.Path)
+		file, err := os.Create(filepath.Join(dest, *fileContent.Path))
 		if err != nil {
 			return err
 		}
@@ -98,4 +98,22 @@ func DownloadContent(client *github.Client, ctx context.Context, owner, repo, pa
 		fmt.Fprintf(file, content)
 	}
 	return nil
+}
+
+// GetContentList return the file/directory list
+func GetContentList(client *github.Client, ctx context.Context, owner, repo, path, branch string)  (map[string]string, error) {
+	content := make(map[string]string)
+	fileContent, dirContent, _, err := client.Repositories.GetContents(ctx, owner, repo, path, GetRepositoryContentGetOptions(branch))
+	if err != nil {
+		return nil, err
+	}
+	if len(dirContent) > 0 {
+		for _, dir := range dirContent {
+			content[*dir.Path] = *dir.Type
+		}
+	}
+	if fileContent != nil{
+		content[*fileContent.Path] = *fileContent.Type
+	}
+	return content, nil
 }
